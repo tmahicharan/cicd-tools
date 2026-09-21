@@ -13,18 +13,24 @@ xfs_growfs /
 xfs_growfs /var
 xfs_growfs /home
 
-# Jenkins prerequisites
-dnf install fontconfig java-21-openjdk -y
+# Add Jenkins repo (current URL)
+sudo curl -fsSL -o /etc/yum.repos.d/jenkins.repo \
+    https://pkg.jenkins.io/rpm/jenkins.repo
 
-# Jenkins repository
-curl -fsSL https://pkg.jenkins.io/redhat-stable/jenkins.repo \
-  -o /etc/yum.repos.d/jenkins.repo
+# Import Jenkins GPG key
+sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
 
-rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+# Install dependencies
+sudo yum install fontconfig java-21-openjdk -y
+
+# Refresh yum's repo cache so it actually reads the new file
+sudo yum clean all && sudo yum makecache
 
 # Install Jenkins
-dnf install jenkins -y
+sudo yum install jenkins -y
+sudo systemctl daemon-reload
 
-# Start Jenkins
-systemctl daemon-reload
-systemctl enable --now jenkins
+# Enable and start it
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+sudo systemctl status jenkins
