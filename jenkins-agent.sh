@@ -15,6 +15,19 @@ xfs_growfs /home
 dnf update -y openssl\* openssh\* -y
 sudo yum install fontconfig java-21-openjdk -y
 
+# Force Java 21 as the default 'java' on PATH.
+# java-17-openjdk (pre-installed on this AMI) registers with a higher
+# alternatives priority than java-21-openjdk, so `java` silently resolves
+# to 17 even after installing 21 unless we set it explicitly. This breaks
+# the Jenkins agent (remoting.jar needs 21+, fails with UnsupportedClassVersionError).
+JAVA21_BIN=$(alternatives --display java | grep -oP '/usr/lib/jvm/java-21-openjdk[^ ]+/bin/java' | head -n1)
+if [ -n "$JAVA21_BIN" ]; then
+  sudo alternatives --set java "$JAVA21_BIN"
+else
+  echo "WARNING: could not locate java-21-openjdk binary via alternatives"
+fi
+java -version 2>&1 | grep -q '"21' && echo "Java default set to 21 OK" || echo "WARNING: java default is NOT 21 after alternatives --set"
+
 dnf module disable nodejs -y
 dnf module enable nodejs:20 -y
 dnf install nodejs -y
